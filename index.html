@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>for you 🌸</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#080208;cursor:default}
+
+/* CANVAS STACK — all pages live here, no transforms */
+#stage{position:fixed;inset:0}
+
+/* Each page: just opacity, NO transform (eliminates glitch) */
+.pg{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 1.1s ease;
+  overflow:hidden;
+}
+.pg.show{opacity:1;pointer-events:all}
+
+/* ─── STARS (canvas drawn, never cause reflow) ─── */
+#starCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ─── PETALS ─── */
+#petalLayer{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.pk{position:absolute;top:-40px;will-change:transform;font-size:16px;animation:pkfall linear infinite;opacity:0}
+@keyframes pkfall{
+  0%  {opacity:0;transform:translateY(0px) rotate(0deg)}
+  8%  {opacity:.6}
+  92% {opacity:.35}
+  100%{opacity:0;transform:translateY(108vh) rotate(540deg)}
+}
+
+/* ─── PAGE BACKGROUNDS ─── */
+.bg1{background:radial-gradient(ellipse 80% 80% at 50% 20%,#4a0820 0%,#1c0410 45%,#06010a 100%)}
+.bg2{background:radial-gradient(ellipse 90% 90% at 30% 60%,#2e0a1a 0%,#120510 45%,#05010a 100%)}
+.bg3{background:radial-gradient(ellipse 80% 90% at 70% 40%,#150828 0%,#0a0418 45%,#03010a 100%)}
+.bg4{background:radial-gradient(ellipse 70% 80% at 50% 50%,#091525 0%,#050c18 45%,#020308 100%)}
+.bg5{background:radial-gradient(ellipse 80% 80% at 50% 65%,#280818 0%,#0e0510 45%,#050108 100%)}
+.bg6{background:radial-gradient(ellipse 80% 70% at 50% 25%,#3a0818 0%,#180410 45%,#080108 100%)}
+
+/* ─── AMBIENT GLOW ─── */
+.glow{
+  position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:1;
+}
+
+/* ─── CONTENT WRAPPER ─── */
+.wrap{
+  position:relative;z-index:3;
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;
+  padding:0 28px;
+  max-width:680px;width:100%;
+}
+
+/* ─── PAGE 1 TYPOGRAPHY ─── */
+.tag{
+  font-family:'Lato',sans-serif;
+  font-size:10px;letter-spacing:5px;text-transform:uppercase;font-weight:400;
+  color:rgba(255,190,210,.45);margin-bottom:36px;
+}
+.h-huge{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(62px,11vw,108px);
+  font-weight:300;line-height:1.0;color:#fff;
+  margin-bottom:22px;
+}
+.h-huge em{font-style:italic;color:#f0a0be}
+.rule{width:48px;height:1px;background:linear-gradient(90deg,transparent,#c8607e,transparent);margin:0 auto 28px}
+.p1-sub{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(17px,2.8vw,24px);
+  font-style:italic;font-weight:300;
+  color:rgba(255,255,255,.5);line-height:1.85;
+  max-width:520px;
+}
+.p1-note{
+  font-family:'Lato',sans-serif;
+  font-size:clamp(12px,1.6vw,14px);font-weight:300;
+  color:rgba(255,255,255,.3);line-height:2.1;
+  margin-top:22px;max-width:440px;
+}
+
+/* ─── PHOTO FRAMES ─── */
+.frame-circle{
+  width:clamp(160px,26vw,210px);height:clamp(160px,26vw,210px);
+  border-radius:50%;overflow:hidden;
+  border:1.5px solid rgba(240,160,190,.35);
+  box-shadow:0 0 0 10px rgba(240,140,180,.06),0 0 70px rgba(200,80,120,.35);
+  margin-bottom:30px;flex-shrink:0;
+}
+.frame-circle img,.frame-wide img{width:100%;height:100%;object-fit:cover}
+.frame-wide{
+  width:min(480px,88vw);height:clamp(200px,32vw,260px);
+  border-radius:18px;overflow:hidden;
+  border:1.5px solid rgba(240,160,190,.3);
+  box-shadow:0 0 80px rgba(180,60,100,.3);
+  margin-bottom:28px;flex-shrink:0;
+}
+
+/* ─── INNER PAGE TYPOGRAPHY ─── */
+.eyebrow{
+  font-family:'Lato',sans-serif;
+  font-size:10px;letter-spacing:4px;text-transform:uppercase;font-weight:400;
+  color:#c8607e;margin-bottom:14px;
+}
+.pg-h{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(28px,5vw,46px);font-weight:400;
+  color:#fff;line-height:1.2;margin-bottom:18px;
+}
+.pg-h em{font-style:italic;color:#f0a0be}
+.pg-p{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(16px,2.2vw,20px);font-weight:300;font-style:italic;
+  color:rgba(255,255,255,.55);line-height:1.9;
+  max-width:500px;
+}
+.pg-p b{font-style:normal;font-weight:400;color:rgba(255,255,255,.75)}
+
+/* ─── ENDING ─── */
+.end-blossom{font-size:clamp(56px,10vw,80px);margin-bottom:20px;line-height:1}
+.end-h{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(30px,5.5vw,52px);font-weight:300;
+  color:#fff;line-height:1.25;margin-bottom:18px;
+}
+.end-h em{font-style:italic;color:#f0a0be}
+.end-p{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(15px,2vw,18px);font-style:italic;font-weight:300;
+  color:rgba(255,255,255,.5);line-height:2;
+  max-width:460px;margin-bottom:26px;
+}
+.end-seal{
+  font-family:'Lato',sans-serif;
+  font-size:11px;letter-spacing:3px;color:rgba(255,255,255,.25);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:50px;padding:8px 22px;display:inline-block;
+}
+
+/* ─── NAV ─── */
+#nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:99;
+  display:flex;align-items:center;justify-content:center;gap:18px;
+  padding:24px 0 30px;
+  background:linear-gradient(transparent,rgba(0,0,0,.55));
+  pointer-events:none;
+}
+.nbtn{
+  pointer-events:all;
+  width:46px;height:46px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.05);
+  backdrop-filter:blur(6px);
+  color:rgba(255,255,255,.7);font-size:17px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,border-color .2s,opacity .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.nbtn:hover{background:rgba(255,255,255,.1);border-color:rgba(240,160,190,.4)}
+.nbtn:disabled{opacity:.2;cursor:default;pointer-events:none}
+.nctr{
+  pointer-events:none;
+  font-family:'Lato',sans-serif;
+  font-size:10px;letter-spacing:3px;
+  color:rgba(255,255,255,.3);min-width:46px;text-align:center;
+}
+
+/* ─── DOTS (right rail) ─── */
+#rail{
+  position:fixed;right:20px;top:50%;transform:translateY(-50%);
+  z-index:99;display:flex;flex-direction:column;gap:9px;
+}
+.rd{
+  width:5px;height:5px;border-radius:50%;
+  background:rgba(255,255,255,.15);
+  transition:background .3s,transform .3s;cursor:pointer;
+}
+.rd.on{background:#c8607e;transform:scale(1.5)}
+
+/* ─── MUTE ─── */
+#mute{
+  position:fixed;top:18px;right:20px;z-index:999;
+  width:36px;height:36px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.4);
+  color:rgba(255,255,255,.6);font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);transition:opacity .2s;
+}
+
+@media(max-width:480px){
+  #rail{display:none}
+  .frame-circle{width:145px;height:145px}
+  .frame-wide{height:185px}
+}
+</style>
+</head>
+<body>
+<audio id="audio" src="song.mp3" loop preload="auto"></audio>
+<button id="mute">🔊</button>
+<canvas id="starCanvas"></canvas>
+<div id="petalLayer"></div>
+<div id="rail"></div>
+
+<div id="stage">
+
+<!-- PAGE 1 -->
+<div class="pg bg1 show" id="pg0">
+  <div class="glow" style="width:500px;height:500px;background:rgba(180,40,90,.18);top:-100px;left:-100px"></div>
+  <div class="glow" style="width:300px;height:300px;background:rgba(200,60,110,.12);bottom:-80px;right:-60px"></div>
+  <div class="wrap">
+    <div class="tag">a little world made just for you</div>
+    <div class="h-huge">hey<br><em>you.</em></div>
+    <div class="rule"></div>
+    <p class="p1-sub">
+      You are the kind of thing<br>that makes ordinary days feel like they were written by someone who really cared.
+    </p>
+    <p class="p1-note">
+      These days without you feel like a song missing its best part.<br>
+      So here is a small pocket universe I made for you to wander through. 🌸
+    </p>
+  </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="pg bg2" id="pg1">
+  <div class="glow" style="width:400px;height:400px;background:rgba(160,40,80,.15);top:-60px;right:-60px"></div>
+  <div class="wrap">
+    <div class="frame-circle">
+      <img src="image1.jpg" alt="you" onerror="this.parentElement.style.cssText+='display:flex;align-items:center;justify-content:center;font-size:60px;background:#2a0a18';this.remove();this.parentElement.innerHTML='🌸'"/>
+    </div>
+    <div class="eyebrow">look at this absolute cutie</div>
+    <h2 class="pg-h">you walked in and<br><em>I forgot how to think</em></h2>
+    <p class="pg-p">
+      You do that thing where you are just <b>existing</b> and somehow that alone makes the whole room feel chosen.<br><br>
+      Honestly it is genuinely unfair. You are not even trying and yet here I am, absolutely gone for you in the most embarrassing way. 🐻
+    </p>
+  </div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="pg bg3" id="pg2">
+  <div class="glow" style="width:420px;height:420px;background:rgba(80,40,160,.12);bottom:-80px;left:-60px"></div>
+  <div class="wrap">
+    <div class="frame-wide">
+      <img src="image2.jpg" alt="us" onerror="this.parentElement.style.cssText+='display:flex;align-items:center;justify-content:center;font-size:70px;background:#100820';this.remove();this.parentElement.innerHTML='💕'"/>
+    </div>
+    <div class="eyebrow">the softest things</div>
+    <h2 class="pg-h">your laugh is the sound<br><em>I rewind the most</em></h2>
+    <p class="pg-p">
+      Some sounds just <b>land differently</b> and yours does something to my chest that I have no good words for yet.<br><br>
+      I keep things you say tucked away like little folded notes. They are treasures. You are a treasure. 🫶
+    </p>
+  </div>
+</div>
+
+<!-- PAGE 4 -->
+<div class="pg bg4" id="pg3">
+  <div class="glow" style="width:380px;height:380px;background:rgba(20,60,120,.18);top:-40px;left:50%;transform:translateX(-50%)"></div>
+  <div class="wrap">
+    <div style="font-size:clamp(48px,8vw,68px);margin-bottom:22px;line-height:1">🌙</div>
+    <div class="eyebrow">a letter I am writing from here</div>
+    <h2 class="pg-h">I hope wherever you are<br><em>feels like a warm blanket</em></h2>
+    <p class="pg-p">
+      I hope the people around you are kind. I hope your food is good and your sleep is deep and nobody gives you any trouble.<br><br>
+      And I hope you know that back here, someone is thinking about you so quietly and so constantly it has basically become a background process. 🌟
+    </p>
+  </div>
+</div>
+
+<!-- PAGE 5 -->
+<div class="pg bg5" id="pg4">
+  <div class="glow" style="width:350px;height:350px;background:rgba(160,30,80,.16);bottom:-40px;right:-40px"></div>
+  <div class="wrap">
+    <div style="font-size:clamp(48px,8vw,68px);margin-bottom:22px;line-height:1">☁️</div>
+    <div class="eyebrow">17th to 22nd · day by day</div>
+    <h2 class="pg-h">each day has a tiny note<br><em>that just says miss her</em></h2>
+    <p class="pg-p">
+      In very small handwriting. At the top of every single one.<br><br>
+      But I am also stupidly proud of you for being out there living, which makes missing you feel sweet instead of sad.<br><br>
+      <b>Come back with stories.</b> I will have the couch warm and the snacks ready and all my attention saved up for you. 🛋️
+    </p>
+  </div>
+</div>
+
+<!-- PAGE 6 -->
+<div class="pg bg6" id="pg5">
+  <div class="glow" style="width:500px;height:500px;background:rgba(200,50,100,.16);top:-120px;left:50%;transform:translateX(-50%)"></div>
+  <div class="wrap">
+    <div class="end-blossom">🌸</div>
+    <h2 class="end-h">come back soon.<br>the world is a little softer<br><em>when you are in it.</em></h2>
+    <p class="end-p">
+      This tiny place will stay here waiting, just like I will — a little impatient, very much in love, and keeping the best spot just for you.
+    </p>
+    <div class="end-seal">always yours &nbsp;·&nbsp; always</div>
+  </div>
+</div>
+
+</div><!-- #stage -->
+
+<div id="nav">
+  <button class="nbtn" id="bk" onclick="go(-1)" disabled>←</button>
+  <span class="nctr" id="ctr">01 · 06</span>
+  <button class="nbtn" id="fw" onclick="go(1)">→</button>
+</div>
+
+<script>
+// ── STARS via Canvas (zero DOM, zero reflow) ──
+(function(){
+  const c=document.getElementById('starCanvas');
+  function resize(){c.width=innerWidth;c.height=innerHeight}
+  resize();window.addEventListener('resize',resize);
+  const ctx=c.getContext('2d');
+  const stars=Array.from({length:140},()=>({
+    x:Math.random()*innerWidth,
+    y:Math.random()*innerHeight,
+    r:Math.random()*.9+.2,
+    a:Math.random(),
+    sp:(.3+Math.random()*.7)*0.004
+  }));
+  let t=0;
+  function draw(){
+    requestAnimationFrame(draw);
+    t+=1;
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s=>{
+      const alpha=.15+.65*(Math.sin(t*s.sp+s.a*.5*Math.PI)*.5+.5);
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,255,${alpha})`;
+      ctx.fill();
+    });
+  }
+  draw();
+})();
+
+// ── PETALS ──
+(function(){
+  const layer=document.getElementById('petalLayer');
+  const e=['🌸','✿','🌷','✾','❀'];
+  for(let i=0;i<20;i++){
+    const p=document.createElement('div');
+    p.className='pk';
+    p.textContent=e[i%e.length];
+    const d=11+Math.random()*13;
+    p.style.cssText=`left:${Math.random()*100}%;font-size:${11+Math.random()*11}px;animation-duration:${d}s;animation-delay:${-Math.random()*d}s`;
+    layer.appendChild(p);
+  }
+})();
+
+// ── PAGE LOGIC ──
+const pages=document.querySelectorAll('.pg');
+const N=pages.length;
+let cur=0;
+
+// dots
+const rail=document.getElementById('rail');
+for(let i=0;i<N;i++){
+  const d=document.createElement('div');
+  d.className='rd'+(i===0?' on':'');
+  const ii=i;
+  d.onclick=()=>go(ii-cur);
+  rail.appendChild(d);
+}
+const dots=rail.querySelectorAll('.rd');
+
+function sync(){
+  dots.forEach((d,i)=>d.classList.toggle('on',i===cur));
+  document.getElementById('ctr').textContent=`0${cur+1} · 0${N}`;
+  document.getElementById('bk').disabled=cur===0;
+  document.getElementById('fw').disabled=cur===N-1;
+}
+
+function go(dir){
+  const nxt=Math.max(0,Math.min(N-1,cur+dir));
+  if(nxt===cur)return;
+  pages[cur].classList.remove('show');
+  cur=nxt;
+  pages[cur].classList.add('show');
+  sync();
+}
+
+sync();
+
+// keyboard
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);
+});
+
+// swipe
+let sx=0,sy=0;
+document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>44)go(dx<0?1:-1);
+  else if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>44)go(dy<0?1:-1);
+},{passive:true});
+
+// ── AUDIO ──
+const audio=document.getElementById('audio');
+const muteBtn=document.getElementById('mute');
+let on=false;
+function tryPlay(){audio.volume=.5;audio.play().then(()=>{on=true;muteBtn.textContent='🔊'}).catch(()=>{})}
+muteBtn.onclick=()=>on?(audio.pause(),on=false,muteBtn.textContent='🔇'):tryPlay();
+document.addEventListener('click',()=>{if(!on)tryPlay()},{once:true});
+tryPlay();
+</script>
+</body>
+</html>
